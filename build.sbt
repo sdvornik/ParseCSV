@@ -17,4 +17,11 @@ libraryDependencies := Seq(
   "junit" % "junit" % "4.12" % Test
 )
 
+scalacOptions ++= Seq(
+  "-deprecation",
+  "-encoding", "UTF-8",
+  "-feature",
+  "-language:_"
+)
+
         

@@ -3,7 +3,8 @@ package com.yahoo.sdvornik
 /**
   * @author Serg Dvornik <sdvornik@yahoo.com>
   */
-import java.time.Instant
+import java.time.{Instant, ZoneId}
+
 import com.yahoo.sdvornik.TimeHelper.TimeHelper
 import shapeless._
 import shapeless.syntax.std.traversable._
@@ -13,21 +14,6 @@ import scala.util.Try
 
 trait Reader[A] {
   def read(str: String): Option[A]
-}
-
-class ReaderImplicits(implicit val helper: TimeHelper) {
-
-
-  implicit val readInt: Reader[Int] = (str: String) => Try(str.toInt).toOption
-
-  implicit val readLong: Reader[Long] = (str: String) => Try(str.toLong).toOption
-
-  implicit val readDouble: Reader[Double] = (str: String) => Try(str.toDouble).toOption
-
-  implicit val readInstant: Reader[Instant] = (str: String) => Try(helper.toInstant(str)).toOption
-
-  implicit val readString: Reader[String] = (str: String) => Some(str)
-
 }
 
 trait HListReader[A] {
@@ -59,6 +45,21 @@ object HListReader {
     }
 }
 
+object CaseClassReader {
+
+  implicit val helper: TimeHelper = TimeHelper(ZoneId.of("UTC"))
+
+  implicit val readInt: Reader[Int] = (str: String) => Try(str.toInt).toOption
+
+  implicit val readLong: Reader[Long] = (str: String) => Try(str.toLong).toOption
+
+  implicit val readDouble: Reader[Double] = (str: String) => Try(str.toDouble).toOption
+
+  implicit val readInstant: Reader[Instant] = (str: String) => Try(helper.toInstant(str)).toOption
+
+  implicit val readString: Reader[String] = (str: String) => Some(str)
+
+}
 
 class CaseClassReader[T](val order: List[Int]) {
 

@@ -1,14 +1,14 @@
 package com.yahoo.sdvornik
 
 import java.nio.charset.StandardCharsets
-import java.time.ZoneId
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpRequest, Uri}
 import akka.stream.ActorMaterializer
 
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
+import scala.util.{Failure, Success}
 /**
   * @author Serg Dvornik <sdvornik@yahoo.com>
   */
@@ -25,36 +25,24 @@ trait Query {
 
 object EntryPoint extends App with Query {
 
-    implicit val system = ActorSystem("client")
-    import system.dispatcher
+  implicit val system: ActorSystem = ActorSystem("client")
+  import system.dispatcher
 
-    implicit val materializer = ActorMaterializer()
+  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
-    private val http = Http()
-    private implicit val helper = TimeHelper(ZoneId.of("UTC"))
-    val imp = new ReaderImplicits
-    import imp._
+  private val http = Http()
 
-    private def requestData(ticker: String): Future[List[FinancialData]] = {
-      val source = Uri(s"https://finance.google.com/finance/historical?q=NASDAQ:$ticker&output=csv")
-      http.singleRequest(HttpRequest(uri = source))
-        .flatMap(_.entity.dataBytes.runReduce((a, b) => a ++ b))
-        .map(_.decodeString(StandardCharsets.UTF_8))
-        .map(content => {
-
-          CSVParser.parse(content) match {
-            case head :: tail =>
-              val order = FinancialData.getOrder(head)
-              val dataReader = new CaseClassReader[FinancialData](order)
-              tail.map(list => dataReader.read(list))
-            case _ => List.empty
-          }
-        }).map(_.foldRight(List.empty[FinancialData]) {
-          case (Some(x), acc) => x :: acc
-          case (_, acc) => acc
-        })
-    }
-
+  private def requestData(ticker: String): Future[List[FinancialData]] = {
+    val source = Uri(s"https://finance.google.com/finance/historical?q=NASDAQ:$ticker&output=csv")
+    http.singleRequest(HttpRequest(uri = source))
+      .flatMap(_.entity.dataBytes.runReduce((a, b) => a ++ b))
+      .map(_.decodeString(StandardCharsets.UTF_8))
+      .map(CSVParser.parse)
+      .map(_.foldRight(List.empty[FinancialData]) {
+        case (Some(x), acc) => x :: acc
+        case (_, acc) => acc
+      })
+  }
 
   override def dailyPrices(ticker: String): Future[List[Double]] = {
     val f = requestData(ticker)
@@ -74,8 +62,14 @@ object EntryPoint extends App with Query {
 
   val ticker = "GOOG"
   val f = requestData(ticker)
-  import scala.concurrent.duration._
-  Await.result(f, 1.second)
-  println(f.value.get.get.mkString("\n"))
+  f.onComplete( {
+    case Success(x) =>
+      println(x.mkString("\n"))
+      http.system.terminate()
+    case Failure(e) =>
+      println(e.getMessage)
+      http.system.terminate()
+  })
+
 
 }

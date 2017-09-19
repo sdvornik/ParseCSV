@@ -7,7 +7,6 @@ import org.junit.runner.RunWith
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.check.Checkers
 import org.scalatest.junit.JUnitRunner
-import shapeless.LabelledGeneric
 
 /**
   * @author Serg Dvornik <sdvornik@yahoo.com>
@@ -45,9 +44,7 @@ class DataTest extends FunSuite with Checkers {
 
   private implicit def dataGenArb(implicit a: Arbitrary[Long]): Arbitrary[(FinancialData, List[String])] = Arbitrary(dataGen)
 
-
-  val imp = new ReaderImplicits
-  import imp._
+  import CaseClassReader._
   test("Check data case class") {
     check { (d: (FinancialData, List[String])) => {
       val data = d._1
