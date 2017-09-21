@@ -15,7 +15,8 @@ class ParserTest  extends FunSuite with Checkers {
   bufferedSource.close()
 
   test("Check parser") {
-    val res: List[Option[FinancialData]] = CSVParser.parse(content)
+    // implicit val caseClassReader = new CaseClassReader[FinancialData]()
+    val res: List[Option[FinancialData]] = new CSVParser().parse(content)
     println(res.mkString("\n"))
     assert(res.forall(_.nonEmpty))
   }

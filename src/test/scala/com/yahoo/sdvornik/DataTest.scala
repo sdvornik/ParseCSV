@@ -15,12 +15,15 @@ import org.scalatest.junit.JUnitRunner
 class DataTest extends FunSuite with Checkers {
 
   implicit override val generatorDrivenConfig =
-    PropertyCheckConfig(minSuccessful = 500, minSize = 0, maxSize = 500)
+    PropertyCheckConfiguration(minSuccessful = 500, minSize = 0, sizeRange = 500)
 
   private val headerList: List[String] = List("Open", "High", "Low", "Close", "Date", "Volume")
-  private implicit val helper = TimeHelper(ZoneId.of("UTC"))
-  private val order = FinancialData.getOrder(headerList)
-  private val dataReader = new CaseClassReader[FinancialData](order)
+
+  private val helper = TimeHelper(ZoneId.of("UTC"))
+  // TODO
+  private val order = null //FinancialData.getOrder(headerList)
+
+  private val dataReader = new CaseClassReader[FinancialData]()
 
   private val now = System.currentTimeMillis()
 
@@ -49,7 +52,7 @@ class DataTest extends FunSuite with Checkers {
     check { (d: (FinancialData, List[String])) => {
       val data = d._1
       val list = d._2
-      val newData = dataReader.read(list).get
+      val newData = dataReader.read(order, list).get
       data == newData
     }}
   }

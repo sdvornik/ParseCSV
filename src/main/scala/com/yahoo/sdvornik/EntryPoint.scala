@@ -1,6 +1,7 @@
 package com.yahoo.sdvornik
 
 import java.nio.charset.StandardCharsets
+import java.time.Instant
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
@@ -23,6 +24,8 @@ trait Query {
   def meanReturn(ticker:String): Future[Option[Double]]
 }
 
+case class FinancialData(date: Instant, open: Double, high: Double, low: Double, close: Double, volume: Long)
+
 object EntryPoint extends App with Query {
 
   implicit val system: ActorSystem = ActorSystem("client")
@@ -34,10 +37,11 @@ object EntryPoint extends App with Query {
 
   private def requestData(ticker: String): Future[List[FinancialData]] = {
     val source = Uri(s"https://finance.google.com/finance/historical?q=NASDAQ:$ticker&output=csv")
+    // implicit val caseClassReader = new CaseClassReader[FinancialData]()
     http.singleRequest(HttpRequest(uri = source))
       .flatMap(_.entity.dataBytes.runReduce((a, b) => a ++ b))
       .map(_.decodeString(StandardCharsets.UTF_8))
-      .map(CSVParser.parse)
+      .map(new CSVParser().parse)
       .map(_.foldRight(List.empty[FinancialData]) {
         case (Some(x), acc) => x :: acc
         case (_, acc) => acc

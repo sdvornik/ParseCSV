@@ -14,7 +14,7 @@ import org.scalatest.junit.JUnitRunner
 class TimeFormatterTest extends FunSuite with Checkers {
 
   implicit override val generatorDrivenConfig =
-    PropertyCheckConfig(minSuccessful = 500, minSize = 0, maxSize = 500)
+    PropertyCheckConfiguration(minSuccessful = 500, minSize = 0, sizeRange = 500)
 
   private val helper = TimeHelper(ZoneId.systemDefault())
   private val now = System.currentTimeMillis()
