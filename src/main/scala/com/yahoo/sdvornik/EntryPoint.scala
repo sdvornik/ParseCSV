@@ -37,7 +37,7 @@ object EntryPoint extends App with Query {
 
   private def requestData(ticker: String): Future[List[FinancialData]] = {
     val source = Uri(s"https://finance.google.com/finance/historical?q=NASDAQ:$ticker&output=csv")
-    // implicit val caseClassReader = new CaseClassReader[FinancialData]()
+    implicit val recordStringReader = new RecordStringReader[FinancialData]
     http.singleRequest(HttpRequest(uri = source))
       .flatMap(_.entity.dataBytes.runReduce((a, b) => a ++ b))
       .map(_.decodeString(StandardCharsets.UTF_8))

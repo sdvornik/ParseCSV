@@ -19,11 +19,11 @@ class DataTest extends FunSuite with Checkers {
 
   private val headerList: List[String] = List("Open", "High", "Low", "Close", "Date", "Volume")
 
-  private val helper = TimeHelper(ZoneId.of("UTC"))
-  // TODO
-  private val order = null //FinancialData.getOrder(headerList)
+  private val dataReader = new RecordStringReader[FinancialData]()
 
-  private val dataReader = new CaseClassReader[FinancialData]()
+  private val order = dataReader.getOrder(headerList)
+
+  private val helper = TimeHelper(ZoneId.of("UTC"))
 
   private val now = System.currentTimeMillis()
 
@@ -47,7 +47,7 @@ class DataTest extends FunSuite with Checkers {
 
   private implicit def dataGenArb(implicit a: Arbitrary[Long]): Arbitrary[(FinancialData, List[String])] = Arbitrary(dataGen)
 
-  import CaseClassReader._
+  import RecordReader._
   test("Check data case class") {
     check { (d: (FinancialData, List[String])) => {
       val data = d._1

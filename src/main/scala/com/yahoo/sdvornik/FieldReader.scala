@@ -4,9 +4,11 @@ package com.yahoo.sdvornik
   * @author Serg Dvornik <sdvornik@yahoo.com>
   */
 import java.time.{Instant, ZoneId}
+import java.util.Locale
 
 import com.yahoo.sdvornik.TimeHelper.TimeHelper
 import shapeless._
+import shapeless.ops.record.Keys
 import shapeless.syntax.std.traversable._
 import shapeless.ops.traversable._
 
@@ -46,9 +48,6 @@ object RecordReader {
         } yield head :: tail
       }
     }
-}
-
-object CaseClassReader {
 
   implicit val helper: TimeHelper = TimeHelper(ZoneId.of("UTC"))
 
@@ -61,10 +60,15 @@ object CaseClassReader {
   implicit val readInstant: FieldReader[Instant] = (str: String) => Try(helper.toInstant(str)).toOption
 
   implicit val readString: FieldReader[String] = (str: String) => Some(str)
-
 }
 
-class CaseClassReader[Record] {
+class RecordStringReader[Record] {
+
+  def getOrder(headerList: List[String]): List[Int] = {
+    val label = LabelledGeneric[FinancialData]
+    val paramMap = Keys[label.Repr].apply.toList.map(_.name).zipWithIndex.toMap
+    headerList.map(_.trim.toLowerCase(Locale.US)).map(paramMap(_))
+  }
 
   def read[A <: HList, B <: HList](order: List[Int], list: List[String])(implicit
                                                        generic: Generic.Aux[Record, B],
